@@ -15,7 +15,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.flynn.citysearch.feature.map.MapScreen
 import com.flynn.citysearch.feature.map.MapViewModel
-import com.flynn.citysearch.navigation.Main
 import com.flynn.citysearch.navigation.MapMain
 import kotlinx.serialization.Serializable
 
@@ -44,7 +43,11 @@ fun NavGraphBuilder.mapPortraitNavigation(provideParentEntry: () -> NavBackStack
                 )
             }
             composable<Map> {
-                MapScreen(viewModel)
+                MapScreen(
+                    viewModel,
+                    shouldShowTopBar = true,
+                    onBackPressed = { nestedNavController.navigateUp() }
+                )
             }
         }
     }

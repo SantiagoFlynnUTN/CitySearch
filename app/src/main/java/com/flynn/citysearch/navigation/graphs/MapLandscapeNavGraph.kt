@@ -19,7 +19,7 @@ fun NavGraphBuilder.mapLandscapeNavigation(provideParentEntry: () -> NavBackStac
         val searchViewModel = hiltViewModel<SearchViewModel>(parentEntry)
         Row {
             SearchScreen(searchViewModel)
-            MapScreen(mapViewModel)
+            MapScreen(mapViewModel, shouldShowTopBar = false)
         }
     }
 }
