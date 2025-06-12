@@ -13,6 +13,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.flynn.citysearch.feature.map.MapScreen
 import com.flynn.citysearch.feature.map.MapViewModel
 import com.flynn.citysearch.navigation.Main
 import com.flynn.citysearch.navigation.MapMain
@@ -31,7 +32,7 @@ fun NavGraphBuilder.mapPortraitNavigation(provideParentEntry: () -> NavBackStack
         val parentEntry = remember { provideParentEntry() }
         val viewModel = hiltViewModel<MapViewModel>(parentEntry)
         val nestedNavController = rememberNavController()
-        NavHost(navController = nestedNavController, startDestination = Search) {
+        NavHost(navController = nestedNavController, startDestination = Map) {
             composable<Search> {
                 Box(
                     modifier = Modifier
@@ -43,15 +44,7 @@ fun NavGraphBuilder.mapPortraitNavigation(provideParentEntry: () -> NavBackStack
                 )
             }
             composable<Map> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Red)
-                        .clickable {
-                            viewModel.count.intValue += 1
-                            println("Count: ${viewModel.count.intValue}")
-                        }
-                )
+                MapScreen(viewModel)
             }
         }
     }
