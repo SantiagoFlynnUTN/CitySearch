@@ -39,7 +39,8 @@ class MapViewModel @Inject constructor(): ViewModel() {
             zoomControlsEnabled = true,
             myLocationButtonEnabled = true,
             mapToolbarEnabled = true,
-            compassEnabled = true
+            compassEnabled = true,
+            rotationGesturesEnabled = true,
         )
     )
 
