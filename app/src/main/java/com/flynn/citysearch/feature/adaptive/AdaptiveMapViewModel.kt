@@ -13,7 +13,7 @@ class AdaptiveMapViewModel @Inject constructor() : ViewModel() {
     val state: StateFlow<ContainerState> = _state.asStateFlow()
 
     data class ContainerState(
-        val currentScreen: Screen = Screen.MAP,
+        val currentScreen: Screen = Screen.SEARCH,
         val city: String = "New York City"
     )
 
