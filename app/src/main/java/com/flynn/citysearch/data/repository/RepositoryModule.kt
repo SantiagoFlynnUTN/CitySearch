@@ -13,6 +13,6 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCityRepository(
-        cityRepository: MockCityRepository
+        cityRepository: CityRepository
     ): CityRepositoryInterface
 }
