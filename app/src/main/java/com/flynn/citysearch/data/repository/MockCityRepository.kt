@@ -1,5 +1,6 @@
 package com.flynn.citysearch.data.repository
 
+import com.flynn.citysearch.data.local.LocalDataSource
 import com.flynn.citysearch.domain.City
 import com.flynn.citysearch.domain.Coordinates
 import javax.inject.Inject
@@ -12,7 +13,9 @@ import javax.inject.Singleton
  */
 @Named("MockCityRepository")
 @Singleton
-class MockCityRepository @Inject constructor() : CityRepositoryInterface {
+class MockCityRepository @Inject constructor(
+    private val localDataSource: LocalDataSource
+) : CityRepositoryInterface {
 
     private val favoriteIds = mutableSetOf<Int>()
 
@@ -65,7 +68,9 @@ class MockCityRepository @Inject constructor() : CityRepositoryInterface {
     )
 
     override suspend fun fetchCities(): List<City> {
-
+        mockCities.forEach { city ->
+            localDataSource.saveCity(city)
+        }
         return mockCities.map { city ->
             city.copy(isFavorite = favoriteIds.contains(city.id))
         }

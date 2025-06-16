@@ -1,0 +1,12 @@
+package com.flynn.citysearch.data.local
+
+import androidx.room.Database
+import androidx.room.RoomDatabase
+
+@Database(
+    entities = [CityEntity::class],
+    version = 4
+)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun cityDao(): CityDao
+}
