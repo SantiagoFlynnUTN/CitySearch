@@ -3,6 +3,8 @@ package com.flynn.citysearch.data.repository
 import com.flynn.citysearch.data.local.LocalDataSource
 import com.flynn.citysearch.domain.City
 import com.flynn.citysearch.domain.Coordinates
+import com.flynn.citysearch.feature.map.model.MapLocation
+import com.google.android.gms.maps.model.LatLng
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -67,12 +69,9 @@ class MockCityRepository @Inject constructor(
         City(45, "Albany", "US", Coordinates(-73.7562, 42.6526))
     )
 
-    override suspend fun fetchCities(): List<City> {
+    override suspend fun fetchCities() {
         mockCities.forEach { city ->
             localDataSource.saveCity(city)
-        }
-        return mockCities.map { city ->
-            city.copy(isFavorite = favoriteIds.contains(city.id))
         }
     }
 
@@ -98,7 +97,7 @@ class MockCityRepository @Inject constructor(
         }
     }
 
-    override suspend fun getCityPolygon(cityName: String): List<Pair<Double, Double>>? {
-        return null
+    override suspend fun getCityPolygon(cityName: MapLocation): Result<List<List<LatLng>>> {
+        return Result.success(emptyList())
     }
 }

@@ -2,6 +2,7 @@ package com.flynn.citysearch.feature.map
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.flynn.citysearch.data.repository.CityRepositoryInterface
 import com.flynn.citysearch.feature.map.model.MapLocation
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -17,7 +18,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MapViewModel @Inject constructor(): ViewModel() {
+class MapViewModel @Inject constructor(
+    private val cityRepository: CityRepositoryInterface
+) : ViewModel() {
 
     private val _state = MutableStateFlow(MapState())
     val state: StateFlow<MapState> = _state.asStateFlow()
@@ -41,7 +44,8 @@ class MapViewModel @Inject constructor(): ViewModel() {
             mapToolbarEnabled = true,
             compassEnabled = true,
             rotationGesturesEnabled = true,
-        )
+        ),
+        val polygonPoints: List<List<LatLng>> = emptyList()
     )
 
     companion object {
@@ -80,9 +84,16 @@ class MapViewModel @Inject constructor(): ViewModel() {
     private fun onSelectLocation(location: MapLocation) {
         viewModelScope.launch {
             dispatch(MapAction.SelectLocation(location))
-            // TODO get polys from a service and pass them to the state
+
+            cityRepository.getCityPolygon(location)
+                .onSuccess { data ->
+                    dispatch(MapAction.UpdatePolygonPoints(data))
+                }.onFailure {
+                    dispatch(MapAction.UpdatePolygonPoints(emptyList()))
+                }
         }
     }
+
 
     private fun dispatch(action: MapAction) {
         _state.value = reducer(_state.value, action)
@@ -109,6 +120,10 @@ class MapViewModel @Inject constructor(): ViewModel() {
             is MapAction.UpdateUiSettings -> state.copy(
                 uiSettings = action.uiSettings
             )
+
+            is MapAction.UpdatePolygonPoints -> state.copy(
+                polygonPoints = action.points
+            )
         }
     }
 }
@@ -127,4 +142,5 @@ internal sealed class MapAction {
     data class UpdateCameraPosition(val cameraPositionState: CameraPositionState) : MapAction()
     data class UpdateMapProperties(val mapProperties: MapProperties) : MapAction()
     data class UpdateUiSettings(val uiSettings: MapUiSettings) : MapAction()
+    data class UpdatePolygonPoints(val points: List<List<LatLng>>) : MapAction()
 }

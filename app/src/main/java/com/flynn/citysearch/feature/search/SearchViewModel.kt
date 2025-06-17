@@ -35,13 +35,8 @@ class SearchViewModel @Inject constructor(
 
     private fun fetchCities() {
         viewModelScope.launch(Dispatchers.IO) {
-            try { //TODO move this try catch
-                val cities = cityRepository.fetchCities()
-                dispatch(SearchAction.SetCities(cities))
-                filterCities()
-            } catch (e: Exception) {
-                dispatch(SearchAction.SetError("Failed to load cities: ${e.message}"))
-            }
+            cityRepository.fetchCities()
+            filterCities()
         }
     }
 

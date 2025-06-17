@@ -6,11 +6,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.Polygon
 import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.launch
 
@@ -51,6 +53,8 @@ fun MapScreen(
 
         LaunchedEffect(location) {
             markerState.position = position
+            mapState.cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(position, 12f), 1000)
+
         }
 
         Marker(
@@ -61,5 +65,18 @@ fun MapScreen(
                 true
             }
         )
+
+        if (mapState.polygonPoints.isNotEmpty()) {
+            mapState.polygonPoints.forEach {points ->
+                if (points.isNotEmpty()) {
+                    Polygon(
+                        points = points,
+                        strokeColor = Color.Blue,
+                        strokeWidth = 4f,
+                        fillColor = Color(0x330000FF)
+                    )
+                }
+            }
+        }
     }
 }

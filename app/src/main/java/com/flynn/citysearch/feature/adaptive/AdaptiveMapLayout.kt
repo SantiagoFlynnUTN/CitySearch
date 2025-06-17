@@ -9,11 +9,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.flynn.citysearch.domain.City
 import com.flynn.citysearch.feature.adaptive.AdaptiveMapViewModel.Screen.MAP
 import com.flynn.citysearch.feature.adaptive.AdaptiveMapViewModel.Screen.SEARCH
+import com.flynn.citysearch.feature.map.MapIntent
 import com.flynn.citysearch.feature.map.MapScreen
 import com.flynn.citysearch.feature.map.MapTopUi
 import com.flynn.citysearch.feature.map.MapViewModel
+import com.flynn.citysearch.feature.map.model.MapLocation
 import com.flynn.citysearch.feature.search.SearchScreen
 import com.flynn.citysearch.feature.search.SearchViewModel
 
@@ -24,6 +27,17 @@ fun AdaptiveMapLayout(viewModel: AdaptiveMapViewModel = hiltViewModel()) {
     val currentScreen = state.currentScreen
     val searchViewModel = hiltViewModel<SearchViewModel>()
     val mapViewModel = hiltViewModel<MapViewModel>()
+
+    val onCitySelected: (City) -> Unit = { city ->
+        val mapLocation = MapLocation(
+            name = city.displayName,
+            latitude = city.coordinates.latitude,
+            longitude = city.coordinates.longitude,
+            description = city.country
+        )
+        mapViewModel.onIntent(MapIntent.SelectLocation(mapLocation))
+        viewModel.onIntent(ContainerIntent.SwitchScreen(MAP))
+    }
 
     Row {
         val mapModifier = if (isLandscape) Modifier.weight(0.5f) else Modifier.weight(1f)
@@ -36,7 +50,8 @@ fun AdaptiveMapLayout(viewModel: AdaptiveMapViewModel = hiltViewModel()) {
         isLandscape -> Row(modifier = Modifier.fillMaxSize()) {
             SearchScreen(
                 modifier = Modifier.weight(0.5f),
-                searchViewModel = searchViewModel
+                searchViewModel = searchViewModel,
+                onCitySelected = onCitySelected
             )
             MapTopUi(
                 modifier = Modifier.weight(0.5f),
@@ -45,12 +60,21 @@ fun AdaptiveMapLayout(viewModel: AdaptiveMapViewModel = hiltViewModel()) {
             )
         }
 
-        currentScreen == SEARCH -> SearchScreen(searchViewModel = searchViewModel)
+        currentScreen == SEARCH -> SearchScreen(
+            searchViewModel = searchViewModel,
+            onCitySelected = onCitySelected
+        )
 
         currentScreen == MAP -> MapTopUi(
             mapViewModel = mapViewModel,
             shouldShowTopBar = true,
-            onBackPressed = { viewModel.onIntent(ContainerIntent.SwitchScreen(SEARCH)) },
+            onBackPressed = {
+                viewModel.onIntent(
+                    ContainerIntent.SwitchScreen(
+                        SEARCH
+                    )
+                )
+            },
         )
     }
 }

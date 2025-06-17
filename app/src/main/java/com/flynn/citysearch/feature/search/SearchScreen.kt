@@ -222,7 +222,7 @@ fun CityItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onCityClick),
+            .clickable { onCityClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(8.dp)
     ) {

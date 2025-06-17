@@ -1,12 +1,14 @@
 package com.flynn.citysearch.data.repository
 
 import com.flynn.citysearch.domain.City
+import com.flynn.citysearch.feature.map.model.MapLocation
+import com.google.android.gms.maps.model.LatLng
 
 interface CityRepositoryInterface {
     /**
      * Fetches all cities from the data source
      */
-    suspend fun fetchCities(): List<City>
+    suspend fun fetchCities()
 
     /**
      * Returns filtered list of cities based on prefix and favorites
@@ -21,5 +23,10 @@ interface CityRepositoryInterface {
      */
     fun toggleFavorite(cityId: Int)
 
-    suspend fun getCityPolygon(cityName: String): List<Pair<Double, Double>>?
+    /**
+     * Returns polygon data for a city
+     * @param cityName The name of the city to get polygon data for
+     * @return A list of polygons, each represented as a list of LatLng points
+     */
+    suspend fun getCityPolygon(cityLocation: MapLocation): Result<List<List<LatLng>>>
 }
