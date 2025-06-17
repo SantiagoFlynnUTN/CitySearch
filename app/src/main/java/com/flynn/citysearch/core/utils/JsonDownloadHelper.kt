@@ -25,6 +25,7 @@ object JsonDownloadHelper {
         apiCall: suspend () -> Response<ResponseBody>,
         context: Context
     ): File = withContext(Dispatchers.IO) {
+        // TODO check if file exists. If it does then create a temp file. Hash both. If not equals then replace and process again. Else return its equals and avoid processing again.
         val response = apiCall()
         if (!response.isSuccessful) throw IOException("Download failed: ${response.code()}")
 

@@ -20,4 +20,6 @@ interface CityRepositoryInterface {
      * @param cityId The ID of the city to toggle
      */
     fun toggleFavorite(cityId: Int)
+
+    suspend fun getCityPolygon(cityName: String): List<Pair<Double, Double>>?
 }

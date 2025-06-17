@@ -54,4 +54,26 @@ object NetworkModule {
     fun provideCityApiService(retrofit: Retrofit): CityApiService {
         return retrofit.create(CityApiService::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideNominatimApiService(
+        moshi: Moshi
+    ): NominatimApiService {
+        return Retrofit.Builder()
+            .baseUrl("https://nominatim.openstreetmap.org/")
+            .client(
+                OkHttpClient.Builder()
+                    .addInterceptor { chain ->
+                        val request = chain.request().newBuilder()
+                            .header("User-Agent", "CitySearchApp/1.0")
+                            .build()
+                        chain.proceed(request)
+                    }
+                    .build()
+            )
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(NominatimApiService::class.java)
+    }
 }

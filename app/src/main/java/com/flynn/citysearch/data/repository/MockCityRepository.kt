@@ -97,4 +97,8 @@ class MockCityRepository @Inject constructor(
             favoriteIds.add(cityId)
         }
     }
+
+    override suspend fun getCityPolygon(cityName: String): List<Pair<Double, Double>>? {
+        return null
+    }
 }

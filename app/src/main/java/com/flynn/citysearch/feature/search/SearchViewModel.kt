@@ -35,7 +35,7 @@ class SearchViewModel @Inject constructor(
 
     private fun fetchCities() {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
+            try { //TODO move this try catch
                 val cities = cityRepository.fetchCities()
                 dispatch(SearchAction.SetCities(cities))
                 filterCities()
@@ -49,16 +49,12 @@ class SearchViewModel @Inject constructor(
         when (intent) {
             is SearchIntent.UpdateSearchQuery -> {
                 dispatch(SearchAction.UpdateSearchQuery(intent.query))
-                viewModelScope.launch {
-                    filterCities()
-                }
+                filterCities()
             }
 
             is SearchIntent.ToggleFavoriteFilter -> {
                 dispatch(SearchAction.ToggleFavoriteFilter)
-                viewModelScope.launch {
-                    filterCities()
-                }
+                filterCities()
             }
 
             is SearchIntent.SelectCity -> {
@@ -68,10 +64,7 @@ class SearchViewModel @Inject constructor(
 
             is SearchIntent.ToggleCityFavorite -> {
                 cityRepository.toggleFavorite(intent.cityId)
-                // Re-filter to update the UI
-                viewModelScope.launch {
-                    filterCities()
-                }
+                filterCities()
             }
 
             is SearchIntent.ClearSelection -> {
@@ -81,12 +74,14 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    private suspend fun filterCities() {
-        val filteredCities = cityRepository.getFilteredCities(
-            prefix = state.value.searchQuery,
-            favoritesOnly = state.value.showFavoritesOnly
-        )
-        dispatch(SearchAction.UpdateFilteredCities(filteredCities))
+    private fun filterCities() {
+        viewModelScope.launch {
+            val filteredCities = cityRepository.getFilteredCities(
+                prefix = state.value.searchQuery,
+                favoritesOnly = state.value.showFavoritesOnly
+            )
+            dispatch(SearchAction.UpdateFilteredCities(filteredCities))
+        }
     }
 
     private fun dispatch(action: SearchAction) {
