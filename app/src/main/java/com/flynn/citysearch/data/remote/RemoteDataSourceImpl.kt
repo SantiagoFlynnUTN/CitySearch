@@ -22,8 +22,9 @@ class RemoteDataSourceImpl @Inject constructor(
     override suspend fun getCityPolygons(cityName: String): Result<List<List<LatLng>>> {
         return runCatching {
             val response = nominatimApi.searchCity(cityName)
-            val geometry =
-                response.features.firstOrNull()?.geometry ?: return Result.success(emptyList())
+            val geometry = response.features.firstOrNull {
+                it.geometry.type == "Polygon" || it.geometry.type == "MultiPolygon"
+            }?.geometry ?: return Result.success(emptyList())
 
             val polygons: List<Polygon> = when (geometry.type) {
                 "Polygon" -> listOf(geometry.coordinates as Polygon)
@@ -43,13 +44,11 @@ class RemoteDataSourceImpl @Inject constructor(
         JsonDownloadHelper.downloadToFile(
             { cityApiService.fetchCities() },
             context = context
-        )
-
-        val file = File(context.cacheDir, "cities.json")
-
-        JsonDownloadHelper.readArrayInChunks<CityDto>(file) { city ->
-            val domainCity = city.toCity()
-            saveToLocal(domainCity)
+        )?.let {
+            JsonDownloadHelper.readArrayInChunks<CityDto>(it) { city ->
+                val domainCity = city.toCity()
+                saveToLocal(domainCity)
+            }
         }
     }
 }

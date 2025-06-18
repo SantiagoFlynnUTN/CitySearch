@@ -14,6 +14,7 @@ import okio.source
 import retrofit2.Response
 import java.io.File
 import java.io.IOException
+import java.security.MessageDigest
 
 object JsonDownloadHelper {
 
@@ -24,18 +25,52 @@ object JsonDownloadHelper {
     suspend fun downloadToFile(
         apiCall: suspend () -> Response<ResponseBody>,
         context: Context
-    ): File = withContext(Dispatchers.IO) {
-        // TODO check if file exists. If it does then create a temp file. Hash both. If not equals then replace and process again. Else return its equals and avoid processing again.
+    ): File? = withContext(Dispatchers.IO) {
+        val file = File(context.cacheDir, "cities.json")
+        val tempFile = File(context.cacheDir, "cities_tmp.json")
+
         val response = apiCall()
         if (!response.isSuccessful) throw IOException("Download failed: ${response.code()}")
+        val body = response.body() ?: throw IOException("Empty response body")
 
-        val file = File(context.cacheDir, "cities.json")
-        response.body()?.byteStream()?.use { input ->
-            file.outputStream().use { output ->
+        body.byteStream().use { input ->
+            tempFile.outputStream().use { output ->
                 input.copyTo(output)
             }
-        } ?: throw IOException("Empty response body")
-        file
+        }
+
+        handleDownloadedFile(file, tempFile)
+    }
+
+    private fun handleDownloadedFile(file: File, tempFile: File): File? {
+        return if (file.exists()) {
+            val oldHash = file.md5()
+            val newHash = tempFile.md5()
+            if (oldHash != newHash) {
+                tempFile.copyTo(file, overwrite = true)
+                println("File updated")
+                file
+            } else {
+                println("File not updated")
+                tempFile.delete()
+                null
+            }
+        } else {
+            tempFile.copyTo(file)
+            file
+        }
+    }
+
+    private fun File.md5(): String {
+        val digest = MessageDigest.getInstance("MD5")
+        inputStream().use { fis ->
+            val buffer = ByteArray(1024 * 4)
+            var bytesRead: Int
+            while (fis.read(buffer).also { bytesRead = it } != -1) {
+                digest.update(buffer, 0, bytesRead)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
     suspend inline fun <reified T> readArrayInChunks(
