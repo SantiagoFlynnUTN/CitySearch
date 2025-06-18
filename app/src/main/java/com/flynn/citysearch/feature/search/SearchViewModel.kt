@@ -46,6 +46,7 @@ class SearchViewModel @Inject constructor(
 
     private fun fetchCities() {
         viewModelScope.launch(Dispatchers.IO) {
+            filterCities()
             cityRepository.fetchCities()
             filterCities()
         }
@@ -70,7 +71,7 @@ class SearchViewModel @Inject constructor(
 
             is SearchIntent.ToggleCityFavorite -> {
                 cityRepository.toggleFavorite(intent.cityId)
-                filterCities(false)
+                dispatch(SearchAction.ToggleCityFavorite(intent.cityId))
             }
 
             is SearchIntent.ClearSelection -> {
@@ -153,6 +154,17 @@ class SearchViewModel @Inject constructor(
                 showFavoritesOnly = !state.showFavoritesOnly
             )
 
+            is SearchAction.ToggleCityFavorite -> {
+                val updatedCities = state.cities.map { city ->
+                    if (city.id == action.cityId) {
+                        city.copy(isFavorite = !city.isFavorite)
+                    } else {
+                        city
+                    }
+                }
+                state.copy(cities = updatedCities)
+            }
+
             is SearchAction.UpdateFilteredCities -> state.copy(
                 cities = action.cities
             )
@@ -206,6 +218,7 @@ sealed class SearchAction {
     data class SetCities(val cities: List<City>) : SearchAction()
     data class UpdateSearchQuery(val query: String) : SearchAction()
     data object ToggleFavoriteFilter : SearchAction()
+    data class ToggleCityFavorite(val cityId: Int) : SearchAction()
     data class UpdateFilteredCities(val cities: List<City>) : SearchAction()
     data class SelectCity(val city: City?) : SearchAction()
     data class SetError(val message: String) : SearchAction()

@@ -17,12 +17,15 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,19 +33,22 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.flynn.citysearch.domain.City
 import com.flynn.citysearch.domain.Coordinates
-import com.flynn.citysearch.feature.search.SearchViewModel.*
+import com.flynn.citysearch.feature.search.SearchViewModel.PaginationState
+import com.flynn.citysearch.feature.search.SearchViewModel.SearchState
+import com.flynn.citysearch.ui.theme.Favorite
 
 @Composable
 fun SearchScreen(
@@ -108,19 +114,24 @@ fun MainSearchScaffold(
                     IconButton(onClick = onBackPressed) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                )
             )
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
+                .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
+            Spacer(modifier = Modifier.height(12.dp))
             SearchBox(state = state, intentProcessor = intentProcessor)
-            Spacer(modifier = Modifier.height(8.dp))
-            BookmarkedCitiesChip(state = state, intentProcessor = intentProcessor)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             CityList(
                 state = state,
                 onCitySelected = onCitySelected,
@@ -136,30 +147,39 @@ fun CityList(
     onCitySelected: (City) -> Unit,
     intentProcessor: (SearchIntent) -> Unit
 ) {
-    when {
-        state.isLoading -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            BookmarkedCitiesChip(state = state, intentProcessor = intentProcessor)
+            Spacer(modifier = Modifier.height(16.dp))
         }
-
-        state.cities.isEmpty() -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No cities found",
-                    style = MaterialTheme.typography.bodyLarge
-                )
+        when {
+            state.isLoading -> {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
             }
-        }
 
-        else -> {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            state.cities.isEmpty() -> {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No cities found",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            }
+
+            else -> {
                 itemsIndexed(items = state.cities, key = { _, city -> city.id }) { index, city ->
                     CityItem(
                         city = city,
@@ -211,9 +231,15 @@ fun BookmarkedCitiesChip(state: SearchState, intentProcessor: (SearchIntent) -> 
         leadingIcon = {
             Icon(
                 imageVector = if (state.showFavoritesOnly) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                contentDescription = "Favorites filter"
+                contentDescription = "Favorites filter",
+                tint = if (state.showFavoritesOnly) Favorite else MaterialTheme.colorScheme.onSurface
             )
-        }
+        },
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            selectedLeadingIconColor = if (state.showFavoritesOnly) Favorite else MaterialTheme.colorScheme.onPrimaryContainer
+        )
     )
 }
 
@@ -222,18 +248,21 @@ fun SearchBox(state: SearchState, intentProcessor: (SearchIntent) -> Unit) {
     OutlinedTextField(
         value = state.searchQuery,
         onValueChange = { intentProcessor(SearchIntent.UpdateSearchQuery(it)) },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp)),
         placeholder = { Text("Search cities...") },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = "Search"
+                contentDescription = "Search",
+                tint = MaterialTheme.colorScheme.primary
             )
         },
-        singleLine = true
+        singleLine = true,
+        shape = RoundedCornerShape(12.dp)
     )
 }
-
 
 @Composable
 fun CityItem(
@@ -247,44 +276,56 @@ fun CityItem(
             .fillMaxWidth()
             .clickable { onCityClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                modifier = Modifier.weight(1f)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "${city.name}, ${city.country}",
+                    modifier = Modifier.weight(1f),
+                    text = city.name,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+
+                IconButton(onClick = onFavoriteToggle) {
+                    Icon(
+                        imageVector = if (city.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = "Toggle Favorite",
+                        tint = if (city.isFavorite) Favorite else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(
-                    text = city.coordinates.toString(),
+                    modifier = Modifier.weight(1f),
+                    text = city.country,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
-
-            IconButton(onClick = onInfoClick) {
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = "City Info"
-                )
-            }
-
-            IconButton(onClick = onFavoriteToggle) {
-                Icon(
-                    imageVector = if (city.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = "Toggle Favorite",
-                    tint = if (city.isFavorite) Color.Red else Color.Gray
-                )
+                IconButton(
+                    onClick = onInfoClick,
+                    modifier = Modifier.padding(0.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "City Info",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
     }

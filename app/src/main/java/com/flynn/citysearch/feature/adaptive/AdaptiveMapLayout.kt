@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -24,9 +25,11 @@ import com.flynn.citysearch.feature.search.SearchViewModel
 fun AdaptiveMapLayout(viewModel: AdaptiveMapViewModel = hiltViewModel()) {
     val isLandscape = LocalConfiguration.current.orientation == ORIENTATION_LANDSCAPE
     val state = viewModel.state.collectAsState().value
+    val intentProcessor = viewModel::onIntent
     val currentScreen = state.currentScreen
     val searchViewModel = hiltViewModel<SearchViewModel>()
     val mapViewModel = hiltViewModel<MapViewModel>()
+    val mapIntentProcessor = mapViewModel::onIntent
 
     val onCitySelected: (City) -> Unit = { city ->
         val mapLocation = MapLocation(
@@ -35,15 +38,23 @@ fun AdaptiveMapLayout(viewModel: AdaptiveMapViewModel = hiltViewModel()) {
             longitude = city.coordinates.longitude,
             description = city.country
         )
-        mapViewModel.onIntent(MapIntent.SelectLocation(mapLocation))
-        viewModel.onIntent(ContainerIntent.SwitchScreen(MAP))
+        mapIntentProcessor(MapIntent.SelectLocation(mapLocation))
+        intentProcessor(ContainerIntent.SwitchScreen(MAP))
     }
 
-    Row {
-        val mapModifier = if (isLandscape) Modifier.weight(0.5f) else Modifier.weight(1f)
-        val searchModifier = if (isLandscape) Modifier.weight(0.5f) else Modifier
-        Box(modifier = searchModifier)
-        MapScreen(modifier = mapModifier, mapViewModel = mapViewModel)
+    LaunchedEffect(state.currentScreen) {
+        if (state.currentScreen == MAP || isLandscape) {
+            intentProcessor(ContainerIntent.SetMapLoaded(true))
+        }
+    }
+
+    if (state.isMapAlreadyLoaded) {
+        Row {
+            val mapModifier = if (isLandscape) Modifier.weight(0.5f) else Modifier.weight(1f)
+            val searchModifier = if (isLandscape) Modifier.weight(0.5f) else Modifier
+            Box(modifier = searchModifier)
+            MapScreen(modifier = mapModifier, mapViewModel = mapViewModel)
+        }
     }
 
     when {
@@ -69,7 +80,7 @@ fun AdaptiveMapLayout(viewModel: AdaptiveMapViewModel = hiltViewModel()) {
             mapViewModel = mapViewModel,
             shouldShowTopBar = true,
             onBackPressed = {
-                viewModel.onIntent(
+                intentProcessor(
                     ContainerIntent.SwitchScreen(
                         SEARCH
                     )

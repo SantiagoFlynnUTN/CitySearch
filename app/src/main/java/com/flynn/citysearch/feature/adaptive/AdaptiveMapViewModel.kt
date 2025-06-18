@@ -14,6 +14,7 @@ class AdaptiveMapViewModel @Inject constructor() : ViewModel() {
 
     data class ContainerState(
         val currentScreen: Screen = Screen.SEARCH,
+        val isMapAlreadyLoaded: Boolean = false,
         val city: String = "New York City"
     )
 
@@ -25,6 +26,10 @@ class AdaptiveMapViewModel @Inject constructor() : ViewModel() {
         when (intent) {
             is ContainerIntent.SwitchScreen -> {
                 dispatch(ContainerAction.SwitchScreen(intent.screen))
+            }
+
+            is ContainerIntent.SetMapLoaded -> {
+                dispatch(ContainerAction.SetMapLoaded(intent.loaded))
             }
 
             is ContainerIntent.UpdateCity -> {
@@ -43,6 +48,10 @@ class AdaptiveMapViewModel @Inject constructor() : ViewModel() {
                 currentScreen = action.screen
             )
 
+            is ContainerAction.SetMapLoaded -> state.copy(
+                isMapAlreadyLoaded = action.loaded
+            )
+
             is ContainerAction.UpdateCity -> state.copy(
                 city = action.city
             )
@@ -52,10 +61,12 @@ class AdaptiveMapViewModel @Inject constructor() : ViewModel() {
 
 sealed class ContainerIntent {
     data class SwitchScreen(val screen: AdaptiveMapViewModel.Screen) : ContainerIntent()
+    data class SetMapLoaded(val loaded: Boolean) : ContainerIntent()
     data class UpdateCity(val city: String) : ContainerIntent()
 }
 
 sealed class ContainerAction {
     data class SwitchScreen(val screen: AdaptiveMapViewModel.Screen) : ContainerAction()
+    data class SetMapLoaded(val loaded: Boolean) : ContainerAction()
     data class UpdateCity(val city: String) : ContainerAction()
 }

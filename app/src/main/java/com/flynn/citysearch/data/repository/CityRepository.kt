@@ -32,11 +32,12 @@ class CityRepository @Inject constructor(
         page: Int
     ): List<City> {
         val cities = localDataSource.filterCities(prefix, limit, page)
-        return if (favoritesOnly) {
-            cities.filter { it.id in favoriteIds }
-        } else {
-            cities
-        }
+
+        return cities
+            .filter { !favoritesOnly || it.id in favoriteIds }
+            .map { city ->
+                if (city.id in favoriteIds) city.copy(isFavorite = true) else city
+            }
     }
 
     override fun toggleFavorite(cityId: Int) {
