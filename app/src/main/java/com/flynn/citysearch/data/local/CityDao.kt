@@ -24,4 +24,22 @@ interface CityDao {
         limit: Int,
         offset: Int
     ): List<CityEntity>
+
+    @Query("UPDATE cities SET isFavorite = :isFavorite WHERE id = :cityId")
+    suspend fun updateFavoriteStatus(cityId: Int, isFavorite: Boolean)
+
+    @Query("SELECT * FROM cities WHERE isFavorite = 1")
+    suspend fun getFavoriteCities(): List<CityEntity>
+
+    @Query(
+        """SELECT * FROM cities 
+    WHERE isFavorite = 1 AND name LIKE :prefix || '%' 
+    ORDER BY name ASC 
+    LIMIT :limit OFFSET :offset"""
+    )
+    suspend fun getFavoriteCitiesByPrefix(
+        prefix: String,
+        limit: Int,
+        offset: Int
+    ): List<CityEntity>
 }

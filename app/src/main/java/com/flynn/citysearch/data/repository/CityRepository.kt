@@ -5,6 +5,9 @@ import com.flynn.citysearch.data.remote.RemoteDataSource
 import com.flynn.citysearch.domain.City
 import com.flynn.citysearch.feature.map.model.MapLocation
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -15,9 +18,6 @@ class CityRepository @Inject constructor(
     private val localDataSource: LocalDataSource,
     private val remoteDataSource: RemoteDataSource
 ) : CityRepositoryInterface {
-
-    //TODO local persistence
-    private val favoriteIds = mutableSetOf<Int>()
 
     override suspend fun fetchCities() {
         remoteDataSource.fetchCities { city ->
@@ -31,18 +31,16 @@ class CityRepository @Inject constructor(
         limit: Int,
         page: Int
     ): List<City> {
-        val cities = localDataSource.filterCities(prefix, limit, page)
-
-        return cities
-            .filter { !favoritesOnly || it.id in favoriteIds }
-            .map { city ->
-                if (city.id in favoriteIds) city.copy(isFavorite = true) else city
-            }
+        return if (favoritesOnly) {
+            localDataSource.getFilteredFavoriteCities(prefix, limit, page)
+        } else {
+            localDataSource.filterCities(prefix, limit, page)
+        }
     }
 
     override fun toggleFavorite(cityId: Int) {
-        if (!favoriteIds.add(cityId)) {
-            favoriteIds.remove(cityId)
+        CoroutineScope(Dispatchers.IO).launch {
+            localDataSource.toggleFavorite(cityId)
         }
     }
 

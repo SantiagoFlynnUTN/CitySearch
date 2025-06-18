@@ -16,4 +16,15 @@ class LocalDataSource @Inject constructor(
     suspend fun saveCity(city: City) {
         cityDao.insert(city.toEntity())
     }
+
+    suspend fun toggleFavorite(cityId: Int) {
+        cityDao.getById(cityId)?.let { city ->
+            cityDao.updateFavoriteStatus(cityId, !city.isFavorite)
+        }
+    }
+
+    suspend fun getFilteredFavoriteCities(query: String, limit: Int, page: Int): List<City> {
+        val offset = page * limit
+        return cityDao.getFavoriteCitiesByPrefix(query, limit, offset).map { it.toDomain() }
+    }
 }
