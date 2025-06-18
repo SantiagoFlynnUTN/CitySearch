@@ -263,7 +263,6 @@ fun SearchBox(state: SearchState, intentProcessor: (SearchIntent) -> Unit) {
         shape = RoundedCornerShape(12.dp)
     )
 }
-
 @Composable
 fun CityItem(
     city: City,
@@ -284,7 +283,7 @@ fun CityItem(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(16.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -292,7 +291,7 @@ fun CityItem(
             ) {
                 Text(
                     modifier = Modifier.weight(1f),
-                    text = city.name,
+                    text = "${city.name}, ${city.country}",
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -306,20 +305,27 @@ fun CityItem(
                     )
                 }
             }
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    modifier = Modifier.weight(1f),
-                    text = city.country,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                IconButton(
-                    onClick = onInfoClick,
-                    modifier = Modifier.padding(0.dp)
-                ) {
+
+                Text(
+                    text = "lat: ${city.coordinates.latitude} - lon: ${city.coordinates.longitude}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 4.dp)
+                )
+
+                IconButton(onClick = onInfoClick) {
                     Icon(
                         imageVector = Icons.Default.Info,
                         contentDescription = "City Info",
@@ -327,9 +333,11 @@ fun CityItem(
                     )
                 }
             }
+
         }
     }
 }
+
 
 private fun shouldLoadMore(index: Int, state: SearchState): Boolean {
     return index >= state.cities.lastIndex - LoadMoreThreshold &&
