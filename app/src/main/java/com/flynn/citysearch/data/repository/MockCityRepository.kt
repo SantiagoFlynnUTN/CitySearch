@@ -75,8 +75,14 @@ class MockCityRepository @Inject constructor(
         }
     }
 
-    override suspend fun getFilteredCities(prefix: String, favoritesOnly: Boolean): List<City> {
+    override suspend fun getFilteredCities(
+        prefix: String,
+        favoritesOnly: Boolean,
+        limit: Int,
+        page: Int
+    ): List<City> {
         val filter = prefix.lowercase().trim()
+        val offset = page * limit
 
         return mockCities
             .asSequence()
@@ -86,6 +92,8 @@ class MockCityRepository @Inject constructor(
                         (filter.isEmpty() || city.name.lowercase().startsWith(filter))
             }
             .sortedBy { it.displayName }
+            .drop(offset)
+            .take(limit)
             .toList()
     }
 

@@ -11,11 +11,18 @@ interface CityRepositoryInterface {
     suspend fun fetchCities()
 
     /**
-     * Returns filtered list of cities based on prefix and favorites
+     * Returns filtered list of cities based on prefix and favorites with pagination
      * @param prefix The prefix to filter by (e.g., "A" to get cities starting with A)
      * @param favoritesOnly If true, only return favorite cities
+     * @param limit Number of items to fetch per page
+     * @param page Page number (0-indexed)
      */
-    suspend fun getFilteredCities(prefix: String, favoritesOnly: Boolean): List<City>
+    suspend fun getFilteredCities(
+        prefix: String,
+        favoritesOnly: Boolean,
+        limit: Int,
+        page: Int
+    ): List<City>
 
     /**
      * Toggles the favorite status of a city

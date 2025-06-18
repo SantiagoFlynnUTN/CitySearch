@@ -29,8 +29,6 @@ data class CoordinatesDto(
     @Json(name = "lat") val latitude: Double
 )
 
-fun List<CityDto>.toCities() = map { it.toCity() }
-
 fun CityDto.toCity() = City(
     id = id,
     name = name,

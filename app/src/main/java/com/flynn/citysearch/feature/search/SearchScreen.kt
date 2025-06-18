@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.flynn.citysearch.domain.City
 import com.flynn.citysearch.domain.Coordinates
-import com.flynn.citysearch.feature.search.SearchViewModel.SearchState
+import com.flynn.citysearch.feature.search.SearchViewModel.*
 
 @Composable
 fun SearchScreen(
@@ -145,6 +145,7 @@ fun CityList(
                 CircularProgressIndicator()
             }
         }
+
         state.cities.isEmpty() -> {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -156,9 +157,10 @@ fun CityList(
                 )
             }
         }
+
         else -> {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(items = state.cities, key = { it.id }) { city ->
+                itemsIndexed(items = state.cities, key = { _, city -> city.id }) { index, city ->
                     CityItem(
                         city = city,
                         onCityClick = { onCitySelected(city) },
@@ -172,9 +174,31 @@ fun CityList(
                         }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
+
+                    if (shouldLoadMore(index, state)) {
+                        intentProcessor(SearchIntent.LoadMore)
+                    }
+                }
+
+                if (state.paginationState.isLoadingMore) {
+                    item {
+                        LoadingMoreItem()
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LoadingMoreItem() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
     }
 }
 
@@ -195,7 +219,6 @@ fun BookmarkedCitiesChip(state: SearchState, intentProcessor: (SearchIntent) -> 
 
 @Composable
 fun SearchBox(state: SearchState, intentProcessor: (SearchIntent) -> Unit) {
-    // Search Box
     OutlinedTextField(
         value = state.searchQuery,
         onValueChange = { intentProcessor(SearchIntent.UpdateSearchQuery(it)) },
@@ -267,6 +290,13 @@ fun CityItem(
     }
 }
 
+private fun shouldLoadMore(index: Int, state: SearchState): Boolean {
+    return index >= state.cities.lastIndex - LoadMoreThreshold &&
+            state.paginationState.canLoadMore && !state.paginationState.isLoadingMore
+}
+
+private const val LoadMoreThreshold = 5
+
 @Preview(showBackground = true)
 @Composable
 fun SearchScreenContentPreview() {
@@ -294,7 +324,8 @@ fun SearchScreenContentPreview() {
         cities = mockCities,
         selectedCity = null,
         showCityDetail = false,
-        errorMessage = null
+        errorMessage = null,
+        paginationState = PaginationState(isLoadingMore = true)
     )
 
     SearchScreenContent(

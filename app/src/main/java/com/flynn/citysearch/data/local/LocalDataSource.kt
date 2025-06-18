@@ -8,16 +8,12 @@ import javax.inject.Singleton
 class LocalDataSource @Inject constructor(
     private val cityDao: CityDao
 ) {
-
-    suspend fun filterCities(query: String): List<City> {
-        return cityDao.getCitiesByPrefix(query,10, 0).map { it.toDomain() }
+    suspend fun filterCities(query: String, limit: Int, page: Int): List<City> {
+        val offset = page * limit
+        return cityDao.getCitiesByPrefix(query, limit, offset).map { it.toDomain() }
     }
 
     suspend fun saveCity(city: City) {
         cityDao.insert(city.toEntity())
-    }
-
-    suspend fun getCityById(id: Int): City? {
-        return cityDao.getById(id)?.toDomain()
     }
 }
