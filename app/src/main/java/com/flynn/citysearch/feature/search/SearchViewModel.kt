@@ -4,6 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flynn.citysearch.data.repository.CityRepositoryInterface
 import com.flynn.citysearch.domain.City
+import com.flynn.citysearch.domain.Storage.DOWNLOADED
+import com.flynn.citysearch.domain.Storage.DOWNLOADING
+import com.flynn.citysearch.domain.Storage.INDEXED
+import com.flynn.citysearch.domain.Storage.INDEXING
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +35,7 @@ class SearchViewModel @Inject constructor(
 
     data class SearchState(
         val isLoading: Boolean = false,
+        val isIndexing: Boolean = false,
         val searchQuery: String = "",
         val showFavoritesOnly: Boolean = false,
         val cities: List<City> = emptyList(),
@@ -46,42 +51,53 @@ class SearchViewModel @Inject constructor(
 
     private fun fetchCities() {
         viewModelScope.launch(Dispatchers.IO) {
-            filterCities()
-            cityRepository.fetchCities()
-            filterCities()
+            cityRepository.fetchCities().collect { cities ->
+                when (cities) {
+                    DOWNLOADING -> dispatch(SearchAction.SetLoading(true))
+                    DOWNLOADED -> dispatch(SearchAction.SetLoading(false))
+                    INDEXING -> dispatch(SearchAction.SetIndexing(true))
+                    INDEXED -> dispatch(SearchAction.SetIndexing(false))
+                }
+                println("Cities: $cities")
+                tryLoadCitiesIfEmpty()
+            }
         }
     }
 
-    fun onIntent(intent: SearchIntent) {
-        when (intent) {
-            is SearchIntent.UpdateSearchQuery -> {
-                dispatch(SearchAction.UpdateSearchQuery(intent.query))
-                filterCities()
-            }
+    fun onIntent(intent: SearchIntent) = when (intent) {
+        is SearchIntent.UpdateSearchQuery -> {
+            dispatch(SearchAction.UpdateSearchQuery(intent.query))
+            filterCities()
+        }
 
-            is SearchIntent.ToggleFavoriteFilter -> {
-                dispatch(SearchAction.ToggleFavoriteFilter)
-                filterCities()
-            }
+        is SearchIntent.ToggleFavoriteFilter -> {
+            dispatch(SearchAction.ToggleFavoriteFilter)
+            filterCities()
+        }
 
-            is SearchIntent.SelectCity -> {
-                dispatch(SearchAction.SelectCity(intent.city))
-                dispatch(SearchAction.SetShowCityDetail(true))
-            }
+        is SearchIntent.SelectCity -> {
+            dispatch(SearchAction.SelectCity(intent.city))
+            dispatch(SearchAction.SetShowCityDetail(true))
+        }
 
-            is SearchIntent.ToggleCityFavorite -> {
-                cityRepository.toggleFavorite(intent.cityId)
-                dispatch(SearchAction.ToggleCityFavorite(intent.cityId))
-            }
+        is SearchIntent.ToggleCityFavorite -> {
+            cityRepository.toggleFavorite(intent.cityId)
+            dispatch(SearchAction.ToggleCityFavorite(intent.cityId))
+        }
 
-            is SearchIntent.ClearSelection -> {
-                dispatch(SearchAction.SelectCity(null))
-                dispatch(SearchAction.SetShowCityDetail(false))
-            }
+        is SearchIntent.ClearSelection -> {
+            dispatch(SearchAction.SelectCity(null))
+            dispatch(SearchAction.SetShowCityDetail(false))
+        }
 
-            is SearchIntent.LoadMore -> {
-                loadMoreCities()
-            }
+        is SearchIntent.LoadMore -> {
+            loadMoreCities()
+        }
+    }
+
+    private fun tryLoadCitiesIfEmpty() {
+        if (state.value.cities.isEmpty()) {
+            filterCities()
         }
     }
 
@@ -89,7 +105,6 @@ class SearchViewModel @Inject constructor(
         viewModelScope.launch {
             if (resetPage) {
                 dispatch(SearchAction.ResetPage)
-                dispatch(SearchAction.SetLoading(true))
                 val filteredCities = cityRepository.getFilteredCities(
                     prefix = state.value.searchQuery,
                     favoritesOnly = state.value.showFavoritesOnly,
@@ -98,7 +113,6 @@ class SearchViewModel @Inject constructor(
                 )
                 dispatch(SearchAction.UpdateFilteredCities(filteredCities))
                 dispatch(SearchAction.SetCanLoadMore(filteredCities.size == PAGE_SIZE))
-                dispatch(SearchAction.SetLoading(false))
 
             } else {
                 loadMoreCities()
@@ -140,6 +154,10 @@ class SearchViewModel @Inject constructor(
         return when (action) {
             is SearchAction.SetLoading -> state.copy(
                 isLoading = action.isLoading
+            )
+
+            is SearchAction.SetIndexing -> state.copy(
+                isIndexing = action.isIndexing
             )
 
             is SearchAction.SetCities -> state.copy(
@@ -215,6 +233,7 @@ sealed class SearchIntent {
 
 sealed class SearchAction {
     data class SetLoading(val isLoading: Boolean) : SearchAction()
+    data class SetIndexing(val isIndexing: Boolean) : SearchAction()
     data class SetCities(val cities: List<City>) : SearchAction()
     data class UpdateSearchQuery(val query: String) : SearchAction()
     data object ToggleFavoriteFilter : SearchAction()

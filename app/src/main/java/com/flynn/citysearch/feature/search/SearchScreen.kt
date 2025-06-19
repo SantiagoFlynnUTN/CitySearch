@@ -25,7 +25,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -245,24 +244,37 @@ fun BookmarkedCitiesChip(state: SearchState, intentProcessor: (SearchIntent) -> 
 
 @Composable
 fun SearchBox(state: SearchState, intentProcessor: (SearchIntent) -> Unit) {
-    OutlinedTextField(
-        value = state.searchQuery,
-        onValueChange = { intentProcessor(SearchIntent.UpdateSearchQuery(it)) },
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp)),
-        placeholder = { Text("Search cities...") },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = "Search",
-                tint = MaterialTheme.colorScheme.primary
+    Column {
+        OutlinedTextField(
+            value = state.searchQuery,
+            onValueChange = { intentProcessor(SearchIntent.UpdateSearchQuery(it)) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp)),
+            placeholder = { Text("Search cities...") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp)
+        )
+        if (state.isIndexing) {
+            Text(
+                text = "Updating... some cities may not be available.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .padding(top = 8.dp)
             )
-        },
-        singleLine = true,
-        shape = RoundedCornerShape(12.dp)
-    )
+        }
+
+    }
 }
+
 @Composable
 fun CityItem(
     city: City,
@@ -368,6 +380,7 @@ fun SearchScreenContentPreview() {
 
     val mockState = SearchState(
         isLoading = false,
+        isIndexing = true,
         searchQuery = "Bu",
         showFavoritesOnly = false,
         cities = mockCities,

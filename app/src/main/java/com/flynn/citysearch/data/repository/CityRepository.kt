@@ -19,11 +19,10 @@ class CityRepository @Inject constructor(
     private val remoteDataSource: RemoteDataSource
 ) : CityRepositoryInterface {
 
-    override suspend fun fetchCities() {
-        remoteDataSource.fetchCities { city ->
+    override suspend fun fetchCities() =
+        remoteDataSource.fetchCities(localDataSource.countCities()) { city ->
             localDataSource.saveCity(city)
         }
-    }
 
     override suspend fun getFilteredCities(
         prefix: String,

@@ -1,7 +1,9 @@
 package com.flynn.citysearch.data.remote
 
 import com.flynn.citysearch.domain.City
+import com.flynn.citysearch.domain.Storage
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.flow.Flow
 
 interface RemoteDataSource {
     /**
@@ -15,5 +17,5 @@ interface RemoteDataSource {
      * Fetches all cities from the gist
      * @param saveToLocal A function to save each city to local storage
      */
-    suspend fun fetchCities(saveToLocal: suspend (City) -> Unit)
+    suspend fun fetchCities(localEntries: Int, saveToLocal: suspend (City) -> Unit) : Flow<Storage>
 }

@@ -3,8 +3,14 @@ package com.flynn.citysearch.data.remote
 import android.content.Context
 import com.flynn.citysearch.core.utils.JsonDownloadHelper
 import com.flynn.citysearch.domain.City
+import com.flynn.citysearch.domain.Storage
+import com.flynn.citysearch.domain.Storage.DOWNLOADED
+import com.flynn.citysearch.domain.Storage.INDEXED
+import com.flynn.citysearch.domain.Storage.INDEXING
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -40,15 +46,48 @@ class RemoteDataSourceImpl @Inject constructor(
         }
     }
 
-    override suspend fun fetchCities(saveToLocal: suspend (City) -> Unit) {
-        JsonDownloadHelper.downloadToFile(
+    override suspend fun fetchCities(
+        localEntries: Int,
+        saveToLocal: suspend (City) -> Unit
+    ) = flow {
+        val fileName = "cities.json"
+        val file = File(context.cacheDir, fileName)
+        if (!file.exists()) {
+            emit(Storage.DOWNLOADING)
+        } else {
+            emit(DOWNLOADED)
+        }
+
+        val shouldResumeProcessing = JsonDownloadHelper.downloadToFile(
+            fileName,
             { cityApiService.fetchCities() },
             context = context
         )?.let {
-            JsonDownloadHelper.readArrayInChunks<CityDto>(it) { city ->
-                val domainCity = city.toCity()
-                saveToLocal(domainCity)
-            }
+            emit(DOWNLOADED)
+            emitAll(persistCities(it, saveToLocal))
+            false
+        } ?: checkLocalEntries(localEntries, file)
+
+        if (shouldResumeProcessing) {
+            emitAll(persistCities(file, saveToLocal))
         }
+    }
+
+    private fun persistCities(
+        file: File,
+        saveToLocal: suspend (City) -> Unit
+    ) = flow {
+        emit(INDEXING)
+        JsonDownloadHelper.readArrayInChunks<CityDto>(file = file) { city ->
+            val domainCity = city.toCity()
+            saveToLocal(domainCity)
+        }
+        emit(INDEXED)
+    }
+
+    private suspend fun checkLocalEntries(localEntries: Int, file: File): Boolean {
+        val entries =
+            JsonDownloadHelper.readArrayInChunks<CityDto>(countOnly = true, file = file) { _ -> }
+        return entries != localEntries
     }
 }

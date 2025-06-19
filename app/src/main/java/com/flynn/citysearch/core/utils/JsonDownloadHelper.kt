@@ -23,11 +23,12 @@ object JsonDownloadHelper {
      *
      * */
     suspend fun downloadToFile(
+        fileName: String,
         apiCall: suspend () -> Response<ResponseBody>,
         context: Context
     ): File? = withContext(Dispatchers.IO) {
-        val file = File(context.cacheDir, "cities.json")
-        val tempFile = File(context.cacheDir, "cities_tmp.json")
+        val file = File(context.cacheDir, fileName)
+        val tempFile = File(context.cacheDir, "tmp.json")
 
         val response = apiCall()
         if (!response.isSuccessful) throw IOException("Download failed: ${response.code()}")
@@ -74,32 +75,47 @@ object JsonDownloadHelper {
     }
 
     suspend inline fun <reified T> readArrayInChunks(
+        countOnly: Boolean = false,
         file: File,
         crossinline onItem: suspend (T) -> Unit
-    ) {
-        val adapter: JsonAdapter<T> = Moshi.Builder()
+    ): Int {
+        val moshi = Moshi.Builder()
             .add(KotlinJsonAdapterFactory())
-            .build().adapter(T::class.java)
+            .build()
+        val adapter = moshi.adapter(T::class.java)
+
+        var count = 0
 
         file.source().buffer().use { source ->
             JsonReader.of(source).use { reader ->
                 reader.beginArray()
                 while (reader.hasNext()) {
-                    try {
-                        val item = adapter.fromJson(reader)
-                        if (item != null) {
-                            onItem(item)
-                        } else {
-                            println("Skipped null item")
-                        }
-                    } catch (e: Exception) {
-                        println("Parsing failed: ${e.message}")
-                        reader.skipValue()
-                    }
-                    yield()
+                    handleJsonItem(reader, adapter, countOnly, onItem)
+                    count++
                 }
                 reader.endArray()
             }
+        }
+        return count
+    }
+
+    suspend inline fun <reified T> handleJsonItem(
+        reader: JsonReader,
+        adapter: JsonAdapter<T>,
+        countOnly: Boolean,
+        crossinline onItem: suspend (T) -> Unit
+    ) {
+        if (countOnly) {
+            reader.skipValue()
+        } else {
+            runCatching {
+                adapter.fromJson(reader)
+            }.onSuccess { item ->
+                if (item != null) onItem(item)
+            }.onFailure {
+                reader.skipValue()
+            }
+            yield()
         }
     }
 }

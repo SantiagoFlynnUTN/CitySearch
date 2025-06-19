@@ -1,14 +1,16 @@
 package com.flynn.citysearch.data.repository
 
 import com.flynn.citysearch.domain.City
+import com.flynn.citysearch.domain.Storage
 import com.flynn.citysearch.feature.map.model.MapLocation
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.flow.Flow
 
 interface CityRepositoryInterface {
     /**
      * Fetches all cities from the data source
      */
-    suspend fun fetchCities()
+    suspend fun fetchCities(): Flow<Storage>
 
     /**
      * Returns filtered list of cities based on prefix and favorites with pagination

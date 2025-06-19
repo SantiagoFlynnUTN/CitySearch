@@ -27,4 +27,8 @@ class LocalDataSource @Inject constructor(
         val offset = page * limit
         return cityDao.getFavoriteCitiesByPrefix(query, limit, offset).map { it.toDomain() }
     }
+
+    suspend fun countCities(): Int {
+        return cityDao.countAll()
+    }
 }
