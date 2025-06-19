@@ -19,7 +19,6 @@ import com.flynn.citysearch.feature.map.MapTopUi
 import com.flynn.citysearch.feature.map.MapViewModel
 import com.flynn.citysearch.feature.map.model.MapLocation
 import com.flynn.citysearch.feature.search.SearchScreen
-import com.flynn.citysearch.feature.search.SearchViewModel
 
 @Composable
 fun AdaptiveMapLayout(viewModel: AdaptiveMapViewModel = hiltViewModel()) {
@@ -27,7 +26,6 @@ fun AdaptiveMapLayout(viewModel: AdaptiveMapViewModel = hiltViewModel()) {
     val state = viewModel.state.collectAsState().value
     val intentProcessor = viewModel::onIntent
     val currentScreen = state.currentScreen
-    val searchViewModel = hiltViewModel<SearchViewModel>()
     val mapViewModel = hiltViewModel<MapViewModel>()
     val mapIntentProcessor = mapViewModel::onIntent
 
@@ -53,7 +51,7 @@ fun AdaptiveMapLayout(viewModel: AdaptiveMapViewModel = hiltViewModel()) {
             val mapModifier = if (isLandscape) Modifier.weight(0.5f) else Modifier.weight(1f)
             val searchModifier = if (isLandscape) Modifier.weight(0.5f) else Modifier
             Box(modifier = searchModifier)
-            MapScreen(modifier = mapModifier, mapViewModel = mapViewModel)
+            MapScreen(modifier = mapModifier)
         }
     }
 
@@ -61,23 +59,19 @@ fun AdaptiveMapLayout(viewModel: AdaptiveMapViewModel = hiltViewModel()) {
         isLandscape -> Row(modifier = Modifier.fillMaxSize()) {
             SearchScreen(
                 modifier = Modifier.weight(0.5f),
-                searchViewModel = searchViewModel,
                 onCitySelected = onCitySelected
             )
             MapTopUi(
                 modifier = Modifier.weight(0.5f),
-                mapViewModel = mapViewModel,
                 shouldShowTopBar = false
             )
         }
 
         currentScreen == SEARCH -> SearchScreen(
-            searchViewModel = searchViewModel,
             onCitySelected = onCitySelected
         )
 
         currentScreen == MAP -> MapTopUi(
-            mapViewModel = mapViewModel,
             shouldShowTopBar = true,
             onBackPressed = {
                 intentProcessor(

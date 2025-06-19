@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
@@ -31,6 +32,16 @@ fun MapTopUi(
 ) {
     val mapState by mapViewModel.state.collectAsState()
 
+    MapTopUiContent(modifier, shouldShowTopBar, onBackPressed, mapState)
+}
+
+@Composable
+private fun MapTopUiContent(
+    modifier: Modifier,
+    shouldShowTopBar: Boolean,
+    onBackPressed: () -> Unit,
+    mapState: MapViewModel.MapState
+) {
     Column(modifier = modifier.fillMaxSize()) {
         if (shouldShowTopBar) {
             MapTopBar(onBackPressed)
@@ -68,5 +79,16 @@ fun MapTopBar(onBackPressed: () -> Unit) {
             titleContentColor = MaterialTheme.colorScheme.onPrimary,
             navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
         )
+    )
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 640)
+@Composable
+fun PreviewMapTopUiContent() {
+    MapTopUiContent(
+        modifier = Modifier,
+        shouldShowTopBar = true,
+        onBackPressed = {},
+        mapState = MapViewModel.MapState(isLoading = true)
     )
 }
