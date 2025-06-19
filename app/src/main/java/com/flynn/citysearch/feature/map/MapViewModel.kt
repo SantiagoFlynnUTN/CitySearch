@@ -87,7 +87,7 @@ class MapViewModel @Inject constructor(
         _state.value = reducer(_state.value, action)
     }
 
-    private fun reducer(state: MapState, action: MapAction): MapState {
+    internal fun reducer(state: MapState, action: MapAction): MapState {
         return when (action) {
             is MapAction.SelectLocation -> state.copy(
                 selectedLocation = action.location

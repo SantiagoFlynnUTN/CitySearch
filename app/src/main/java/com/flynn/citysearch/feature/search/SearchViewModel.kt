@@ -9,7 +9,7 @@ import com.flynn.citysearch.domain.Storage.DOWNLOADING
 import com.flynn.citysearch.domain.Storage.INDEXED
 import com.flynn.citysearch.domain.Storage.INDEXING
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +18,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
-    private val cityRepository: CityRepositoryInterface
+    private val cityRepository: CityRepositoryInterface,
+    val iODispatcher: CoroutineDispatcher
 ) : ViewModel() {
     private val _state = MutableStateFlow(SearchState())
     val state: StateFlow<SearchState> = _state.asStateFlow()
@@ -41,7 +42,6 @@ class SearchViewModel @Inject constructor(
         val cities: List<City> = emptyList(),
         val selectedCity: City? = null,
         val showCityDetail: Boolean = false,
-        val errorMessage: String? = null,
         val paginationState: PaginationState = PaginationState()
     )
 
@@ -50,7 +50,7 @@ class SearchViewModel @Inject constructor(
     }
 
     private fun fetchCities() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(iODispatcher) {
             cityRepository.fetchCities().collect { cities ->
                 when (cities) {
                     DOWNLOADING -> dispatch(SearchAction.SetLoading(true))
@@ -150,7 +150,7 @@ class SearchViewModel @Inject constructor(
         _state.value = reducer(state.value, action)
     }
 
-    private fun reducer(state: SearchState, action: SearchAction): SearchState {
+    internal fun reducer(state: SearchState, action: SearchAction): SearchState {
         return when (action) {
             is SearchAction.SetLoading -> state.copy(
                 isLoading = action.isLoading
@@ -158,10 +158,6 @@ class SearchViewModel @Inject constructor(
 
             is SearchAction.SetIndexing -> state.copy(
                 isIndexing = action.isIndexing
-            )
-
-            is SearchAction.SetCities -> state.copy(
-                cities = action.cities
             )
 
             is SearchAction.UpdateSearchQuery -> state.copy(
@@ -189,10 +185,6 @@ class SearchViewModel @Inject constructor(
 
             is SearchAction.SelectCity -> state.copy(
                 selectedCity = action.city
-            )
-
-            is SearchAction.SetError -> state.copy(
-                errorMessage = action.message
             )
 
             is SearchAction.SetShowCityDetail -> state.copy(
@@ -234,13 +226,11 @@ sealed class SearchIntent {
 sealed class SearchAction {
     data class SetLoading(val isLoading: Boolean) : SearchAction()
     data class SetIndexing(val isIndexing: Boolean) : SearchAction()
-    data class SetCities(val cities: List<City>) : SearchAction()
     data class UpdateSearchQuery(val query: String) : SearchAction()
     data object ToggleFavoriteFilter : SearchAction()
     data class ToggleCityFavorite(val cityId: Int) : SearchAction()
     data class UpdateFilteredCities(val cities: List<City>) : SearchAction()
     data class SelectCity(val city: City?) : SearchAction()
-    data class SetError(val message: String) : SearchAction()
     data class SetShowCityDetail(val show: Boolean) : SearchAction()
     data class SetLoadingMore(val isLoading: Boolean) : SearchAction()
     data class SetCanLoadMore(val canLoadMore: Boolean) : SearchAction()

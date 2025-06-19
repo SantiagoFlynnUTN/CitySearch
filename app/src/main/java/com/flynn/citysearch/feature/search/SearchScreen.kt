@@ -386,7 +386,6 @@ fun SearchScreenContentPreview() {
         cities = mockCities,
         selectedCity = null,
         showCityDetail = false,
-        errorMessage = null,
         paginationState = PaginationState(isLoadingMore = true)
     )
 

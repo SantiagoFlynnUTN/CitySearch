@@ -42,7 +42,7 @@ class AdaptiveMapViewModel @Inject constructor() : ViewModel() {
         _state.value = reducer(_state.value, action)
     }
 
-    private fun reducer(state: ContainerState, action: ContainerAction): ContainerState {
+    internal fun reducer(state: ContainerState, action: ContainerAction): ContainerState {
         return when (action) {
             is ContainerAction.SwitchScreen -> state.copy(
                 currentScreen = action.screen
