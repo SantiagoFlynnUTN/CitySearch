@@ -15,6 +15,7 @@ class CityDaoTest {
 
     private lateinit var db: AppDatabase
     private lateinit var cityDao: CityDao
+    private lateinit var entries: List<CityEntity>
 
     @Before
     fun setUp() {
@@ -23,16 +24,7 @@ class CityDaoTest {
             .allowMainThreadQueries()
             .build()
         cityDao = db.cityDao()
-    }
-
-    @After
-    fun tearDown() {
-        db.close()
-    }
-
-    @Test
-    fun testFilterCitiesSortedAlphabetically() = runTest {
-        val entries = listOf(
+       entries = listOf(
             CityEntity(519188, "Novinki", "RU", 37.666668, 55.683334, false),
             CityEntity(1283378, "Gorkhā", "NP", 84.633331, 28.0, false),
             CityEntity(1270260, "State of Haryāna", "IN", 76.0, 29.0, false),
@@ -64,6 +56,15 @@ class CityDaoTest {
             CityEntity(563692, "Dzhaga", "RU", 42.650002, 43.25, false)
         )
 
+    }
+
+    @After
+    fun tearDown() {
+        db.close()
+    }
+
+    @Test
+    fun testFilterCitiesSortedAlphabetically() = runTest {
         entries.shuffled().forEach { cityDao.insert(it) }
 
         val result = cityDao.getCitiesByPrefix("", limit = 100, offset = 0)
@@ -72,5 +73,4 @@ class CityDaoTest {
         val expected = entries.map { it.name }.sorted()
         assertEquals(expected, names)
     }
-
 }
