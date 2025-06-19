@@ -49,10 +49,8 @@ object JsonDownloadHelper {
             val newHash = tempFile.md5()
             if (oldHash != newHash) {
                 tempFile.copyTo(file, overwrite = true)
-                println("File updated")
                 file
             } else {
-                println("File not updated")
                 tempFile.delete()
                 null
             }

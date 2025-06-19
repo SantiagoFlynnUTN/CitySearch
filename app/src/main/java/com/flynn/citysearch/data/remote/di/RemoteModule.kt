@@ -1,5 +1,7 @@
-package com.flynn.citysearch.data.remote
+package com.flynn.citysearch.data.remote.di
 
+import com.flynn.citysearch.data.remote.RemoteDataSource
+import com.flynn.citysearch.data.remote.RemoteDataSourceImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

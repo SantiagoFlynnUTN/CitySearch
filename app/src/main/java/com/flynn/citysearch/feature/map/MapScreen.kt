@@ -31,7 +31,6 @@ fun MapScreen(
         modifier = modifier,
         cameraPositionState = mapState.cameraPositionState,
         properties = mapState.mapProperties,
-        uiSettings = mapState.uiSettings,
         onMapLoaded = {
             intentProcessor(MapIntent.SetLoading(false))
 
@@ -53,7 +52,10 @@ fun MapScreen(
 
         LaunchedEffect(location) {
             markerState.position = position
-            mapState.cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(position, 12f), 1000)
+            mapState.cameraPositionState.animate(
+                CameraUpdateFactory.newLatLngZoom(position, 12f),
+                1000
+            )
 
         }
 
@@ -67,7 +69,7 @@ fun MapScreen(
         )
 
         if (mapState.polygonPoints.isNotEmpty()) {
-            mapState.polygonPoints.forEach {points ->
+            mapState.polygonPoints.forEach { points ->
                 if (points.isNotEmpty()) {
                     Polygon(
                         points = points,

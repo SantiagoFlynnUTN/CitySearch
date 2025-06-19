@@ -1,6 +1,8 @@
-package com.flynn.citysearch.data.remote
+package com.flynn.citysearch.data.remote.di
 
 import com.flynn.citysearch.BuildConfig
+import com.flynn.citysearch.data.remote.CityApiService
+import com.flynn.citysearch.data.remote.NominatimApiService
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -61,12 +63,12 @@ object NetworkModule {
         moshi: Moshi
     ): NominatimApiService {
         return Retrofit.Builder()
-            .baseUrl("https://nominatim.openstreetmap.org/")
+            .baseUrl(NOMINATIM_BASE_URL)
             .client(
                 OkHttpClient.Builder()
                     .addInterceptor { chain ->
                         val request = chain.request().newBuilder()
-                            .header("User-Agent", "CitySearchApp/1.0")
+                            .header(USER_AGENT_HEADER, USER_AGENT_VALUE)
                             .build()
                         chain.proceed(request)
                     }
@@ -76,4 +78,8 @@ object NetworkModule {
             .build()
             .create(NominatimApiService::class.java)
     }
+
+    private const val NOMINATIM_BASE_URL = "https://nominatim.openstreetmap.org/"
+    private const val USER_AGENT_HEADER = "User-Agent"
+    private const val USER_AGENT_VALUE = "CitySearchApp/1.0"
 }

@@ -1,5 +1,7 @@
-package com.flynn.citysearch.data.repository
+package com.flynn.citysearch.data.repository.di
 
+import com.flynn.citysearch.data.repository.CityRepository
+import com.flynn.citysearch.data.repository.CityRepositoryInterface
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

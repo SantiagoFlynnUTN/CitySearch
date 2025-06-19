@@ -15,7 +15,8 @@ interface RemoteDataSource {
 
     /**
      * Fetches all cities from the gist
+     * @param localEntries entries qty of the local storage
      * @param saveToLocal A function to save each city to local storage
      */
-    suspend fun fetchCities(localEntries: Int, saveToLocal: suspend (City) -> Unit) : Flow<Storage>
+    suspend fun fetchCities(localEntries: Int, saveToLocal: suspend (City) -> Unit): Flow<Storage>
 }

@@ -6,7 +6,7 @@ import androidx.navigation.compose.rememberNavController
 import com.flynn.citysearch.navigation.graphs.mainSearchMapNavigation
 
 @Composable
-fun NavigationHost(){
+fun NavigationHost() {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = Main) {

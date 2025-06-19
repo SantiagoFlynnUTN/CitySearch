@@ -9,7 +9,6 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
-import com.google.maps.android.compose.MapUiSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,13 +36,6 @@ class MapViewModel @Inject constructor(
         val mapProperties: MapProperties = MapProperties(
             mapType = MapType.NORMAL,
             isMyLocationEnabled = false
-        ),
-        val uiSettings: MapUiSettings = MapUiSettings(
-            zoomControlsEnabled = true,
-            myLocationButtonEnabled = true,
-            mapToolbarEnabled = true,
-            compassEnabled = true,
-            rotationGesturesEnabled = true,
         ),
         val polygonPoints: List<List<LatLng>> = emptyList()
     )
@@ -73,10 +65,6 @@ class MapViewModel @Inject constructor(
 
             is MapIntent.UpdateMapProperties -> {
                 dispatch(MapAction.UpdateMapProperties(intent.mapProperties))
-            }
-
-            is MapIntent.UpdateUiSettings -> {
-                dispatch(MapAction.UpdateUiSettings(intent.uiSettings))
             }
         }
     }
@@ -117,10 +105,6 @@ class MapViewModel @Inject constructor(
                 mapProperties = action.mapProperties
             )
 
-            is MapAction.UpdateUiSettings -> state.copy(
-                uiSettings = action.uiSettings
-            )
-
             is MapAction.UpdatePolygonPoints -> state.copy(
                 polygonPoints = action.points
             )
@@ -133,7 +117,6 @@ sealed class MapIntent {
     data class SetLoading(val isLoading: Boolean) : MapIntent()
     data class UpdateCameraPosition(val cameraPositionState: CameraPositionState) : MapIntent()
     data class UpdateMapProperties(val mapProperties: MapProperties) : MapIntent()
-    data class UpdateUiSettings(val uiSettings: MapUiSettings) : MapIntent()
 }
 
 internal sealed class MapAction {
@@ -141,6 +124,5 @@ internal sealed class MapAction {
     data class SetLoading(val isLoading: Boolean) : MapAction()
     data class UpdateCameraPosition(val cameraPositionState: CameraPositionState) : MapAction()
     data class UpdateMapProperties(val mapProperties: MapProperties) : MapAction()
-    data class UpdateUiSettings(val uiSettings: MapUiSettings) : MapAction()
     data class UpdatePolygonPoints(val points: List<List<LatLng>>) : MapAction()
 }
