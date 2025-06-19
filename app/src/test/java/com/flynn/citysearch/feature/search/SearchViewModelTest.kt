@@ -33,7 +33,6 @@ class SearchViewModelTest {
     fun setup() {
         repository = mockk(relaxed = true)
 
-        // Default stub for fetchCities flow
         coEvery { repository.fetchCities() } returns flowOf(Storage.DOWNLOADED)
 
         viewModel = SearchViewModel(repository, dispatcherRule.testDispatcher)
@@ -52,10 +51,10 @@ class SearchViewModelTest {
 
     @Test
     fun `on UpdateSearchQuery should update query and call getFilteredCities`() = runTest {
-        val fakeCities = listOf(City(id = 1, name = "Test", country = "AR", Coordinates(0.0, 0.0)))
+        val mockCities = listOf(City(id = 1, name = "Test", country = "AR", Coordinates(0.0, 0.0)))
         coEvery {
             repository.getFilteredCities(any(), any(), any(), any())
-        } returns fakeCities
+        } returns mockCities
 
         viewModel.onIntent(SearchIntent.UpdateSearchQuery("Te"))
 
@@ -63,15 +62,15 @@ class SearchViewModelTest {
 
         val state = viewModel.state.value
         assertEquals("Te", state.searchQuery)
-        assertEquals(fakeCities, state.cities)
+        assertEquals(mockCities, state.cities)
     }
 
     @Test
     fun `on ToggleFavoriteFilter should flip state and call getFilteredCities`() = runTest {
-        val fakeCities = listOf(City(id = 1, name = "Fav", country = "AR", Coordinates(0.0, 0.0)))
+        val mockCities = listOf(City(id = 1, name = "Fav", country = "AR", Coordinates(0.0, 0.0)))
         coEvery {
             repository.getFilteredCities(any(), any(), any(), any())
-        } returns fakeCities
+        } returns mockCities
 
         viewModel.onIntent(SearchIntent.ToggleFavoriteFilter)
 
@@ -79,7 +78,7 @@ class SearchViewModelTest {
 
         val state = viewModel.state.value
         assertTrue(state.showFavoritesOnly)
-        assertEquals(fakeCities, state.cities)
+        assertEquals(mockCities, state.cities)
     }
 
     @Test
